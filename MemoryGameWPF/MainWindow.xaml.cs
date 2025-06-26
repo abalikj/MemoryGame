@@ -29,6 +29,7 @@ namespace MemoryGameWPF
         private Dictionary<string, List<Button>> botMemory = new Dictionary<string, List<Button>>();
         private int totalMatches = 0;
         private int totalPairs = 8;
+        private int tries = 0;
         private DispatcherTimer timer;
         private int seconds = 0;
         private string difficulty = "Easy";
@@ -120,7 +121,7 @@ namespace MemoryGameWPF
             timer.Tick += (s, e) =>
             {
                 seconds++;
-                TimerText.Text = $"Време: {seconds} сек";
+                UpdateStatusText();
             };
             timer.Start();
         }
@@ -151,10 +152,20 @@ namespace MemoryGameWPF
                 card.IsMatched = true;
                 firstCard.IsMatched = true;
                 totalMatches++;
+                tries++;
+                UpdateStatusText();
                 if (botMemory.ContainsKey(card.ImagePath)) botMemory.Remove(card.ImagePath);
+
+                if (totalMatches >= totalPairs)
+                {
+                    EndGame();
+                    return;
+                }
             }
             else
             {
+                tries++;
+                UpdateStatusText();
                 UnflipCard(btn, card);
                 UnflipCard(firstCardBtn, firstCard);
                 AddToBotMemory(card.ImagePath, btn);
@@ -242,9 +253,20 @@ namespace MemoryGameWPF
                 c1.IsMatched = true;
                 c2.IsMatched = true;
                 totalMatches++;
+                tries++;
+                UpdateStatusText();
+
+                if (totalMatches >= totalPairs)
+                {
+                    EndGame();
+                    return;
+                }
             }
             else
             {
+                tries++;
+                UpdateStatusText();
+
                 UnflipCard(b1, c1);
                 UnflipCard(b2, c2);
                 AddToBotMemory(c1.ImagePath, b1);
@@ -267,6 +289,14 @@ namespace MemoryGameWPF
             c1.IsMatched = true;
             c2.IsMatched = true;
             totalMatches++;
+            tries++;
+            UpdateStatusText();
+
+            if (totalMatches >= totalPairs)
+            {
+                EndGame();
+                return;
+            }
 
             isPlayerTurn = true;
             TurnLabel.Text = "На потег е: Ти";
@@ -275,8 +305,30 @@ namespace MemoryGameWPF
         private void EndGame()
         {
             timer.Stop();
-            MessageBox.Show($"Играта заврши за {seconds} секунди!", "Честитки");
+            var result = MessageBox.Show(
+                $"Играта заврши за {seconds} секунди со {tries} потези!\nДали сакате да играте повторно?",
+                "Честитки",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                // Show the main menu
+                MainMenu menu = new MainMenu();
+                menu.Show();
+                this.Close();
+            }
+            else
+            {
+                Application.Current.Shutdown();
+            }
         }
+
+        private void UpdateStatusText()
+        {
+            TimerText.Text = $"Време: {seconds} сек\nПотези: {tries}";
+        }
+
     }
 }
 
