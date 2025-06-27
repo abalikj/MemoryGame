@@ -14,13 +14,11 @@ using System.Windows.Shapes;
 
 namespace MemoryGameWPF
 {
-    /// <summary>
-    /// Interaction logic for MainMenu.xaml
-    /// </summary>
+    
     public partial class MainMenu : Window
     {
 
-        // ⬇️ Листа каде што ги чуваме сите скорови со ниво
+        // listata so site skorovi so nivo
         private static List<(string Difficulty, double Score)> highScores = new List<(string, double)>();
         public MainMenu()
         {
@@ -63,15 +61,15 @@ namespace MemoryGameWPF
 
             if (highScores.Count == 0)
             {
-                HighScoresListBox.Items.Add("Нема резултати уште.");
+                HighScoresListBox.Items.Add("No scores yet.");
                 return;
             }
 
-            // Најди го најдобриот резултат (најмал score)
+            // najdobriot rezultat e toj so najmal score
             var best = highScores.OrderBy(s => s.Score).First();
 
-            // Прикажи го само тој
-            HighScoresListBox.Items.Add($"Најдобар резултат: {best.Score:F2} ({best.Difficulty})");
+            
+            HighScoresListBox.Items.Add($"Best score: {best.Score:F2} ({best.Difficulty})");
         }
 
         private void Back_Click(object sender, RoutedEventArgs e)
