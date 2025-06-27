@@ -19,6 +19,9 @@ namespace MemoryGameWPF
     /// </summary>
     public partial class MainMenu : Window
     {
+
+        // ⬇️ Листа каде што ги чуваме сите скорови со ниво
+        private static List<(string Difficulty, double Score)> highScores = new List<(string, double)>();
         public MainMenu()
         {
             InitializeComponent();
@@ -43,6 +46,38 @@ namespace MemoryGameWPF
             var game = new MainWindow(6, 6, "Hard"); // 6x6
             game.Show();
             this.Close();
+        }
+
+        public static void AddHighScore(string difficulty, double timeSeconds, int moves)
+        {
+            double score = timeSeconds * moves;
+            highScores.Add((difficulty, score));
+        }
+
+        private void HighScore_Click(object sender, RoutedEventArgs e)
+        {
+            MainMenuPanel.Visibility = Visibility.Collapsed;
+            HighScoresPanel.Visibility = Visibility.Visible;
+
+            HighScoresListBox.Items.Clear();
+
+            if (highScores.Count == 0)
+            {
+                HighScoresListBox.Items.Add("Нема резултати уште.");
+                return;
+            }
+
+            // Најди го најдобриот резултат (најмал score)
+            var best = highScores.OrderBy(s => s.Score).First();
+
+            // Прикажи го само тој
+            HighScoresListBox.Items.Add($"Најдобар резултат: {best.Score:F2} ({best.Difficulty})");
+        }
+
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            HighScoresPanel.Visibility = Visibility.Collapsed;
+            MainMenuPanel.Visibility = Visibility.Visible;
         }
     }
 }
