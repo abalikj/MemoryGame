@@ -6,7 +6,7 @@
         Background="#FFFDFDFD">
 
     <Window.Resources>
-        <!-- Ефект за сенка -->
+        <!-- efekti staviv-->
         <DropShadowEffect x:Key="DropShadowEffect"
                           Color="Black"
                           BlurRadius="15"
@@ -15,7 +15,7 @@
     </Window.Resources>
 
     <Grid>
-        <!-- Главното мени -->
+        <!-- main glavno meni -->
         <StackPanel x:Name="MainMenuPanel"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
@@ -60,7 +60,7 @@
                     Margin="0,0,0,10"/>
         </StackPanel>
 
-        <!-- Панел за High Score -->
+        <!-- panel za High Score -->
         <Grid x:Name="HighScoresPanel"
               Background="#AA000000"
               Visibility="Collapsed">
@@ -75,7 +75,7 @@
 
                 <StackPanel>
 
-                    <TextBlock Text="🏆 Најдобар резултат"
+                    <TextBlock Text=" Best Score "
                                FontSize="26"
                                FontWeight="Bold"
                                Foreground="#2E8B57"
@@ -90,7 +90,7 @@
                              Background="Transparent"
                              Margin="0,0,0,20"/>
 
-                    <Button Content="🔙 Назад"
+                    <Button Content="🔙 Back "
                             Click="Back_Click"
                             Padding="10"
                             FontSize="16"
