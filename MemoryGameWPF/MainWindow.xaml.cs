@@ -60,6 +60,11 @@ namespace MemoryGameWPF
             firstCardBtn = null;
             isPlayerTurn = true;
             TurnLabel.Text = "На потег е: Ти";
+
+            // Сетирај го прогрес барот според бројот на парови
+            ProgressBarMatches.Maximum = totalPairs;
+            ProgressBarMatches.Value = 0;
+
             StartTimer();
 
             Random rnd = new Random();
@@ -152,6 +157,7 @@ namespace MemoryGameWPF
                 card.IsMatched = true;
                 firstCard.IsMatched = true;
                 totalMatches++;
+                ProgressBarMatches.Value = totalMatches;
                 tries++;
                 UpdateStatusText();
                 if (botMemory.ContainsKey(card.ImagePath)) botMemory.Remove(card.ImagePath);
@@ -253,6 +259,7 @@ namespace MemoryGameWPF
                 c1.IsMatched = true;
                 c2.IsMatched = true;
                 totalMatches++;
+                ProgressBarMatches.Value = totalMatches;
                 tries++;
                 UpdateStatusText();
 
@@ -289,6 +296,7 @@ namespace MemoryGameWPF
             c1.IsMatched = true;
             c2.IsMatched = true;
             totalMatches++;
+            ProgressBarMatches.Value = totalMatches;
             tries++;
             UpdateStatusText();
 
@@ -305,28 +313,41 @@ namespace MemoryGameWPF
         private void EndGame()
         {
             timer.Stop();
-            var result = MessageBox.Show(
-                $"Играта заврши за {seconds} секунди со {tries} потези!\nДали сакате да играте повторно?",
-                "Честитки",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+            MainMenu.AddHighScore(difficulty, seconds, tries);
 
-            if (result == MessageBoxResult.Yes)
-            {
-                // Show the main menu
-                MainMenu menu = new MainMenu();
-                menu.Show();
-                this.Close();
-            }
-            else
-            {
-                Application.Current.Shutdown();
-            }
+            // MessageBox само за инфо
+            MessageBox.Show($"🎉 Заврши за {seconds} секунди со {tries} потези!", "Честитки!");
+
+            // Потоа го прикажуваме custom панелот
+            EndGamePanel.Visibility = Visibility.Visible;
+            EndGameMessage.Text = "Што сакате понатаму?";
+            EndGameStats.Text = $"Ниво: {difficulty}\nВреме: {seconds} секунди\nПотези: {tries}";
+
+
         }
 
         private void UpdateStatusText()
         {
             TimerText.Text = $"Време: {seconds} сек\nПотези: {tries}";
+        }
+
+        private void PlayAgain_Click(object sender, RoutedEventArgs e)
+        {
+            var newGame = new MainWindow(CardGrid.Rows, CardGrid.Columns, difficulty);
+            newGame.Show();
+            this.Close();
+        }
+
+        private void BackToMenu_Click(object sender, RoutedEventArgs e)
+        {
+            MainMenu menu = new MainMenu();
+            menu.Show();
+            this.Close();
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
         }
 
     }
