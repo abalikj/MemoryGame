@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace MemoryGameWPF
 {
+    [Serializable]
     public class Card
     {
         public int Id { get; set; }
