@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,9 +18,7 @@ using System.Windows.Threading;
 
 namespace MemoryGameWPF
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
+   
     public partial class MainWindow : Window
     {
         private List<Card> cards = new List<Card>();
@@ -59,9 +58,9 @@ namespace MemoryGameWPF
             firstCard = null;
             firstCardBtn = null;
             isPlayerTurn = true;
-            TurnLabel.Text = "На потег е: Ти";
+            TurnLabel.Text = "Turn: You";
 
-            // Сетирај го прогрес барот според бројот на парови
+            // spored br.na parovi set na progres bart
             ProgressBarMatches.Maximum = totalPairs;
             ProgressBarMatches.Value = 0;
 
@@ -75,10 +74,10 @@ namespace MemoryGameWPF
                                    .Take(totalPairs)
                                    .ToList();
 
-            // Дуплирај ги за да има по два од секоја (за парови)
+            // dupliraj za da ima par
             List<string> allImages = imageFiles.SelectMany(f => new[] { f, f }).ToList();
 
-            // Промешај ги сите
+            // meshanje
             allImages = allImages.OrderBy(f => rnd.Next()).ToList();
             for (int i = 0; i < allImages.Count; i++)
             {
@@ -99,12 +98,12 @@ namespace MemoryGameWPF
 
                 btn.Width = 100;
                 btn.Height = 100;
-                btn.Padding = new Thickness(0); // важно
+                btn.Padding = new Thickness(0); // vaznooo
                 btn.Margin = new Thickness(5);
-                btn.BorderThickness = new Thickness(0); 
+                btn.BorderThickness = new Thickness(0);
 
 
-                // Центрирање на содржина (ако има)
+                // centriranje
                 btn.HorizontalContentAlignment = HorizontalAlignment.Center;
                 btn.VerticalContentAlignment = VerticalAlignment.Center;
                 btn.Tag = c;
@@ -181,9 +180,9 @@ namespace MemoryGameWPF
             firstCard = null;
             firstCardBtn = null;
 
-            // Префрли потег на компјутерот
+            // turn na kompjuterot
             isPlayerTurn = false;
-            TurnLabel.Text = "На потег е: Компјутерот";
+            TurnLabel.Text = "Turn: Computer";
 
             await Task.Delay(1000);
             await BotTurn();
@@ -281,7 +280,7 @@ namespace MemoryGameWPF
             }
 
             isPlayerTurn = true;
-            TurnLabel.Text = "На потег е: Ти";
+            TurnLabel.Text = "Turn: You";
         }
 
         private async Task BotClickPair(Button b1, Button b2)
@@ -307,7 +306,7 @@ namespace MemoryGameWPF
             }
 
             isPlayerTurn = true;
-            TurnLabel.Text = "На потег е: Ти";
+            TurnLabel.Text = "Turn: You";
         }
 
         private void EndGame()
@@ -315,20 +314,20 @@ namespace MemoryGameWPF
             timer.Stop();
             MainMenu.AddHighScore(difficulty, seconds, tries);
 
-            // MessageBox само за инфо
-            MessageBox.Show($"🎉 Заврши за {seconds} секунди со {tries} потези!", "Честитки!");
+            // MessageBox za info samo
+            MessageBox.Show($"🎉 Finished in {seconds} seconds with {tries} moves!", "Congratulations!");
 
-            // Потоа го прикажуваме custom панелот
+            // sega panelot
             EndGamePanel.Visibility = Visibility.Visible;
-            EndGameMessage.Text = "Што сакате понатаму?";
-            EndGameStats.Text = $"Ниво: {difficulty}\nВреме: {seconds} секунди\nПотези: {tries}";
+            EndGameMessage.Text = "What you like to do next?";
+            EndGameStats.Text = $"Level: {difficulty}\nTime: {seconds} seconds\nMoves: {tries}";
 
 
         }
 
         private void UpdateStatusText()
         {
-            TimerText.Text = $"Време: {seconds} сек\nПотези: {tries}";
+            TimerText.Text = $"Time: {seconds} sec\nMoves: {tries}";
         }
 
         private void PlayAgain_Click(object sender, RoutedEventArgs e)
@@ -350,7 +349,200 @@ namespace MemoryGameWPF
             Application.Current.Shutdown();
         }
 
+        private void GoToMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Do you want to return to the main menu? The current game will be lost.",
+                                         "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                timer?.Stop();
+                MainMenu menu = new MainMenu();
+                menu.Show();
+                this.Close();
+            }
+        }
+
+        private string saveFilePath = "savedgame.dat";
+
+        public void SaveGame()
+        {
+            GameState state = new GameState
+            {
+                Cards = new List<Card>(),
+                TotalMatches = totalMatches,
+                Tries = tries,
+                Seconds = seconds,
+                IsPlayerTurn = isPlayerTurn,
+                Difficulty = difficulty,
+                BotMemoryIndices = new Dictionary<string, List<int>>()
+            };
+
+            // listata ja popolnuvame so sostjbata na kartickite
+            for (int i = 0; i < CardGrid.Children.Count; i++)
+            {
+                Button btn = (Button)CardGrid.Children[i];
+                Card card = btn.Tag as Card;
+
+                state.Cards.Add(new Card
+                {
+                    Id = i,
+                    ImagePath = card.ImagePath,
+                    IsFlipped = card.IsFlipped,
+                    IsMatched = card.IsMatched
+                });
+            }
+
+            // botMemory da gi pameti indsite na kopcinjata
+            foreach (var kvp in botMemory)
+            {
+                List<int> indices = new List<int>();
+                foreach (var btn in kvp.Value)
+                {
+                    int index = CardGrid.Children.IndexOf(btn);
+                    if (index >= 0)
+                        indices.Add(index);
+                }
+                state.BotMemoryIndices[kvp.Key] = indices;
+            }
+
+            using (FileStream fs = new FileStream(saveFilePath, FileMode.Create))
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(fs, state);
+            }
+        }
+
+        public void LoadGame()
+        {
+            if (!File.Exists(saveFilePath))
+            {
+                MessageBox.Show("No saved game found.");
+                return;
+            }
+
+            GameState state;
+
+            using (FileStream fs = new FileStream(saveFilePath, FileMode.Open))
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                state = (GameState)formatter.Deserialize(fs);
+            }
+
+            // proveri nivo tezinata
+            if (state.Difficulty != difficulty)
+            {
+                MessageBox.Show($"No saved game found for difficulty: {difficulty}.", "Load error");
+                return;
+            }
+
+            // zemija ja sostojbata 
+            totalMatches = state.TotalMatches;
+            tries = state.Tries;
+            seconds = state.Seconds;
+            isPlayerTurn = state.IsPlayerTurn;
+            difficulty = state.Difficulty;
+
+            cards.Clear();
+            CardGrid.Children.Clear();
+            botMemory.Clear();
+
+            int totalCards = state.Cards.Count;
+
+            // dinamicki del ama ne znam
+            int rows = (int)Math.Sqrt(totalCards);
+            int cols = totalCards / rows;
+            if (rows * cols < totalCards)
+                cols++; 
+
+            CardGrid.Rows = rows;
+            CardGrid.Columns = cols;
+
+            totalPairs = totalCards / 2; 
+
+            for (int i = 0; i < totalCards; i++)
+            {
+                var cs = state.Cards[i];
+                Card c = new Card
+                {
+                    ImagePath = cs.ImagePath,
+                    IsFlipped = cs.IsFlipped,
+                    IsMatched = cs.IsMatched
+                };
+                cards.Add(c);
+
+                Button btn = new Button();
+                btn.Tag = c;
+                btn.Width = 100;
+                btn.Height = 100;
+                btn.Padding = new Thickness(0);
+                btn.Margin = new Thickness(5);
+                btn.BorderThickness = new Thickness(0);
+                btn.HorizontalContentAlignment = HorizontalAlignment.Center;
+                btn.VerticalContentAlignment = VerticalAlignment.Center;
+                btn.Click += Card_Click;
+
+                if (c.IsFlipped || c.IsMatched)
+                {
+                    btn.Content = new Image
+                    {
+                        Source = new BitmapImage(new Uri(c.ImagePath, UriKind.Relative)),
+                        Stretch = Stretch.UniformToFill
+                    };
+                }
+                else
+                {
+                    btn.Content = new Image
+                    {
+                        Source = new BitmapImage(new Uri("Images/square.png", UriKind.Relative)),
+                        Stretch = Stretch.UniformToFill
+                    };
+                }
+
+                btn.Background = Brushes.LightGray;
+                CardGrid.Children.Add(btn);
+            }
+
+            // nazad memorijata na botot
+            foreach (var kvp in state.BotMemoryIndices)
+            {
+                List<Button> btns = new List<Button>();
+                foreach (int idx in kvp.Value)
+                {
+                    if (idx >= 0 && idx < CardGrid.Children.Count)
+                    {
+                        Button b = (Button)CardGrid.Children[idx];
+                        btns.Add(b);
+                    }
+                }
+                botMemory[kvp.Key] = btns;
+            }
+
+            ProgressBarMatches.Maximum = totalPairs;
+            ProgressBarMatches.Value = totalMatches;
+            UpdateStatusText();
+
+            TurnLabel.Text = isPlayerTurn ? "Turn: You" : "Turn: Computer";
+
+            timer.Stop();
+            timer.Start();
+
+            if (!isPlayerTurn)
+            {
+                _ = BotTurn();
+            }
+        }
+
+        private void SaveGame_Click(object sender, RoutedEventArgs e)
+        {
+            SaveGame();
+            MessageBox.Show("Game has been saved.");
+        }
+
+        private void LoadGame_Click(object sender, RoutedEventArgs e)
+        {
+            LoadGame();
+        }
+
     }
 }
-
-
