@@ -319,7 +319,7 @@ namespace MemoryGameWPF
 
             // sega panelot
             EndGamePanel.Visibility = Visibility.Visible;
-            EndGameMessage.Text = "What would you like to do next?";
+            EndGameMessage.Text = "What do you like to do next?";
             EndGameStats.Text = $"Level: {difficulty}\nTime: {seconds} seconds\nMoves: {tries}";
 
 
